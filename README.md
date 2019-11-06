@@ -43,7 +43,7 @@ xml = fuze(xml1, xml2)
 ```
 
 # Conflicting markup
-Conflicting markup. Sometimes it is not possible to merge two markups, because tags intersect. In such a case one has a choice:
+Sometimes it is not possible to merge two markups, because tags intersect. In such a case one has a choice:
 
   a. Raise an exception and let caller handle the problem
   b. Resolve by segmenting one of the markups
