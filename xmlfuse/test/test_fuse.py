@@ -189,3 +189,25 @@ def test_15():
 
     with pytest.raises(RuntimeError, match="Conflicting markup"):
         fuse(xml1, xml2, prefer_slave_inner=False, auto_segment=False)
+
+
+def test_16():
+    xml1 = et.fromstring('<a>Hello and Bye</a>')
+    xml2 = et.fromstring('<a>Hello and Good bye!</a>')
+
+    with pytest.raises(RuntimeError, match="Input documents have different text at offset 10"):
+        fuse(xml1, xml2, prefer_slave_inner=False, auto_segment=False)
+
+def test_17():
+    xml1 = et.fromstring('<a>Hello and</a>')
+    xml2 = et.fromstring('<a>Hello and Good bye!</a>')
+
+    with pytest.raises(RuntimeError, match="Master document has shorter text than the slave.*"):
+        fuse(xml1, xml2, prefer_slave_inner=False, auto_segment=False)
+
+def test_18():
+    xml1 = et.fromstring('<a>Hello and Good bye!</a>')
+    xml2 = et.fromstring('<a>Hello and</a>')
+
+    with pytest.raises(RuntimeError, match="Master document has longer text than the slave.*"):
+        fuse(xml1, xml2, prefer_slave_inner=False, auto_segment=False)

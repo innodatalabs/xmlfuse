@@ -1,60 +1,8 @@
-'''
-Given two XML documents with the SAME text, but possibly DIFFERENT markup, creates a document with the MERGED markup.
-
-Example:
-
-Input 1: '<b>Hello</b>, world!'
-Input 2: 'Hello, <i>world!</i>'
-
-Output: '<b>Hello</b>, <i>world!</i>'
-
-Caveats:
-
-1. Conflicting markup. Sometimes it is not possible to merge two markups, because tags intersect. In such a case one has a choice:
-    a. Raise an exception and let caller handle the problem
-    b. Resolve by segmenting one of the markups
-
-    For example:
-
-    Input 1: '<b>Hello</b>, world!'
-    Input 2: 'He<i>llo, world!</i>'
-
-    Output (after segmenting second markup): '<b>He<i>llo</i></b><i>, world!</i>'
-
-2. Merge ambiguity. When both markups wrap the same text, there is a nesting ambuguity - which tag should be inner
-    and which should be outer.
-
-    For example:
-
-    Input 1: '<b>Hello</b>, world!'
-    Input 2: '<i>Hello</i>, world!'
-
-    Output 1: '<b><i>Hello</i></b>, world!'
-    Output 2: '<i><b>Hello</b></i>, world!'
-
-    Both output markups are consistent with the inputs!
-
-Main API:
-
-    events = merge_events(events1, events2, auto_segment=True, prefer_slave_inner=True)
-
-    Where `events1` is the first XML (master), `events2` is the second XML (slave).
-    Result is an XML event stream that corresponds to the merged document.
-
-    The order of the event parameters matters when automatically segmenting conflicts and resolving ambiguities.
-
-    `auto_segment` parameter controls merging conflicts. If set to `True` (default), slave markup will be segmented to
-    be consistent with the master markup. Master markup is never segmented. If this parameter is set to `False`, an exception
-    will be thrown if markups are not compatible.
-
-    `prefer_slave_inner` parameter controls ambiguity resolution. When set to `True` (default), slave markup will be put inside
-    master markup. If set to `False`, slave markup will wrap master markup whenever possible.
-'''
 from types import SimpleNamespace
 import lxmlx.event as ev
 from lxmlx.event import ENTER, EXIT, TEXT, PI, COMMENT
 
-SPOT = 'spot'  # internal event type to mark zero-length markup
+SPOT = 'spot'  # internal event type to mark various zero-length markup
 
 
 def fuse(xml1, xml2, auto_segment=True, prefer_slave_inner=True, strip_slave_top_tag=True):
@@ -75,7 +23,7 @@ def fuse_events(events1, events2, auto_segment=True, prefer_slave_inner=True):
     events2 = list(events2)
 
     if ev.text_of(events1) != ev.text_of(events2):
-        raise ValueError('Input documents must have identical text')
+        raise_text_diff(ev.text_of(events1), ev.text_of(events2))
 
     offsets = text_offsets(events1) | text_offsets(events2)
 
@@ -86,6 +34,24 @@ def fuse_events(events1, events2, auto_segment=True, prefer_slave_inner=True):
 
     return events
 
+
+def raise_text_diff(t1, t2):
+    for offset,(c1,c2) in enumerate(zip(t1, t2)):
+        if c1 != c2:
+            snippet1 = t1[max(0, offset-20):offset + 20]
+            snippet2 = t2[max(0, offset-20):offset + 20]
+            raise RuntimeError('Input documents have different text at offset %s:\n'
+                % offset + snippet1 + '\n' + snippet2)
+    offset = min(len(t1), len(t2))
+    snippet1 = t1[max(0, offset-20):offset + 20]
+    snippet2 = t2[max(0, offset-20):offset + 20]
+    if len(t1) > len(t2):
+        raise RuntimeError('Master document has longer text than the slave:\n'
+                + snippet1 + '\n' + snippet2)
+    elif len(t1) < len(t2):
+        raise RuntimeError('Master document has shorter text than the slave:\n'
+                + snippet1 + '\n' + snippet2)
+    assert False
 
 def text_offsets(events):
     offsets = set()
