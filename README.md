@@ -34,7 +34,7 @@ assert et.tostring(xml) == b'<span><b>Hello</b>, <i>world!</i></span>'
 Error is raised if text differs. Whitespace does matter!
 
 Example:
-```
+```python
 xml1 = et.fromstring('<span>Hello</span>')
 xml2 = et.fromstring('<span>Good bye</span>')
 
@@ -52,7 +52,7 @@ We treat first document as **master**, and second as **slave**. Master markup is
 conflict between master and slave markups (and if `auto_segment` flag is `True`), `fuse()` will segment slave to make markup consistent.
 
 Example:
-```
+```python
 xml1 = et.fromstring('<span>Hel<i>lo, world!</i></span>')
 xml2 = et.fromstring('<span><b>Hello</b>, world!</span>')
 
@@ -69,7 +69,7 @@ We resolve this by consistently trying to put **slave** markup inside the **mast
 by setting the flag `prefer_slave_inner` to false.
 
 Example:
-```
+```python
 xml1 = et.fromstring('<span><i>Hello</i>, world!</span>')
 xml2 = et.fromstring('<span><b>Hello</b>, world!</span>')
 
@@ -86,8 +86,8 @@ set `strip_slave_top_tag=False`.
 
 # fuse() signature
 
-```
-  fuse(xml1, xml2, *, prefer_slave_inner=True, auto_segment=True, strip_slave_top_tag=True)
+```python
+fuse(xml1, xml2, *, prefer_slave_inner=True, auto_segment=True, strip_slave_top_tag=True)
 ```
 Where:
 * `xml1` is the master XML document (LXML Element object, see http://lxml.de)
